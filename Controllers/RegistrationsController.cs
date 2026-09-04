@@ -1,5 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
-using medii_si_platforme_de_dezvoltare_avansate_events.Models;
+using medii_si_platforme_de_dezvoltare_avansate_events.Models.DTOs;
 using medii_si_platforme_de_dezvoltare_avansate_events.Services;
 
 namespace medii_si_platforme_de_dezvoltare_avansate_events.Controllers

@@ -1,4 +1,5 @@
-using medii_si_platforme_de_dezvoltare_avansate_events.Models;
+using medii_si_platforme_de_dezvoltare_avansate_events.Models.DTOs;
+using medii_si_platforme_de_dezvoltare_avansate_events.Models.Entities;
 
 namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
 {

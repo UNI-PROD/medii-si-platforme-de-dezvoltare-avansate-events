@@ -1,0 +1,182 @@
+@baseUrl = http://localhost:5155/api
+@adminUserId = 1
+@regularUserId = 2
+
+### ===== EVENTS =====
+
+### 1. Get All Events
+GET {{baseUrl}}/events
+
+### 2. Get Active Events
+GET {{baseUrl}}/events/active
+
+### 3. Get Event by ID
+GET {{baseUrl}}/events/1
+
+### 4. Get Event by ID - 2
+GET {{baseUrl}}/events/2
+
+### 5. Create Event (Admin Only)
+POST {{baseUrl}}/events?adminUserId={{adminUserId}}
+Content-Type: application/json
+
+{
+  "title": "Training: ASP.NET 9 New Features",
+  "description": "Descoperă noile feature-uri din ASP.NET 9",
+  "startDate": "2026-12-01T18:00:00Z",
+  "registrationDeadline": "2026-11-25T23:59:59Z",
+  "maxParticipants": 25,
+  "location": "Sibiu - Tech Academy"
+}
+
+### 6. Create Event - Validation Test (deadline after start)
+POST {{baseUrl}}/events?adminUserId={{adminUserId}}
+Content-Type: application/json
+
+{
+  "title": "Invalid Event",
+  "description": "Test invalid event",
+  "startDate": "2026-10-01T10:00:00Z",
+  "registrationDeadline": "2026-10-15T23:59:59Z",
+  "maxParticipants": 10,
+  "location": "Sibiu"
+}
+
+### 7. Update Event
+PUT {{baseUrl}}/events/1?adminUserId={{adminUserId}}
+Content-Type: application/json
+
+{
+  "title": "Workshop: ASP.NET Core - UPDATED",
+  "maxParticipants": 35,
+  "location": "Sibiu - Innovation Hub"
+}
+
+### 8. Delete Event (Admin Only)
+DELETE {{baseUrl}}/events/1?adminUserId={{adminUserId}}
+
+### 9. Get Event Participants (Admin Only)
+GET {{baseUrl}}/events/1/participants?adminUserId={{adminUserId}}
+
+### ===== USERS =====
+
+### 10. Get All Users
+GET {{baseUrl}}/users
+
+### 11. Get User by ID
+GET {{baseUrl}}/users/1
+
+### 12. Get User by ID - Regular User
+GET {{baseUrl}}/users/2
+
+### 13. Create User
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "email": "ana@sibiuevents.com",
+  "fullName": "Ana Dumitru"
+}
+
+### 14. Create Another User
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "email": "george@sibiuevents.com",
+  "fullName": "George Ionescu"
+}
+
+### 15. Create User - Email already exists
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "email": "user@sibiuevents.com",
+  "fullName": "Another User"
+}
+
+### ===== REGISTRATIONS =====
+
+### 16. Join Event (User 2 -> Event 3)
+POST {{baseUrl}}/registrations/join?userId={{regularUserId}}
+Content-Type: application/json
+
+{
+  "eventId": 3
+}
+
+### 17. Join Event - Different User and Event
+POST {{baseUrl}}/registrations/join?userId={{regularUserId}}
+Content-Type: application/json
+
+{
+  "eventId": 4
+}
+
+### 18. Try to Join Same Event Again (Should Fail)
+POST {{baseUrl}}/registrations/join?userId={{regularUserId}}
+Content-Type: application/json
+
+{
+  "eventId": 3
+}
+
+### 19. Join Event - Event Not Found
+POST {{baseUrl}}/registrations/join?userId={{regularUserId}}
+Content-Type: application/json
+
+{
+  "eventId": 999
+}
+
+### 20. Get User Registrations
+GET {{baseUrl}}/registrations/user/{{regularUserId}}
+
+### 21. Get User Registrations - Another User
+GET {{baseUrl}}/registrations/user/1
+
+### 22. Cancel Registration
+POST {{baseUrl}}/registrations/cancel?userId={{regularUserId}}&eventId=4
+
+### ===== ADMIN OPERATIONS =====
+
+### 23. Create Event as Regular User (Should Fail)
+POST {{baseUrl}}/events?adminUserId={{regularUserId}}
+Content-Type: application/json
+
+{
+  "title": "Unauthorized Event",
+  "description": "This should fail",
+  "startDate": "2026-11-01T10:00:00Z",
+  "registrationDeadline": "2026-10-25T23:59:59Z",
+  "maxParticipants": 20,
+  "location": "Sibiu"
+}
+
+### 24. Delete Event as Regular User (Should Fail)
+DELETE {{baseUrl}}/events/2?adminUserId={{regularUserId}}
+
+### 25. Get Participants as Regular User (Should Fail)
+GET {{baseUrl}}/events/1/participants?adminUserId={{regularUserId}}
+
+### ===== SPECIAL SCENARIOS =====
+
+### 26. Create Event with Max Participants = 0 (Should Fail)
+POST {{baseUrl}}/events?adminUserId={{adminUserId}}
+Content-Type: application/json
+
+{
+  "title": "Invalid Event",
+  "description": "No spots",
+  "startDate": "2026-10-01T10:00:00Z",
+  "registrationDeadline": "2026-09-25T23:59:59Z",
+  "maxParticipants": 0,
+  "location": "Sibiu"
+}
+
+### 27. Get Events - Count them
+GET {{baseUrl}}/events
+
+### 28. Get Active Events - Only open registration
+GET {{baseUrl}}/events/active

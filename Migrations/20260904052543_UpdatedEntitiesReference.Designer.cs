@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using medii_si_platforme_de_dezvoltare_avansate_events.Data;
 
@@ -10,9 +11,11 @@ using medii_si_platforme_de_dezvoltare_avansate_events.Data;
 namespace medii_si_platforme_de_dezvoltare_avansate_events.Migrations
 {
     [DbContext(typeof(SibiuEventsContext))]
-    partial class SibiuEventsContextModelSnapshot : ModelSnapshot
+    [Migration("20260904052543_UpdatedEntitiesReference")]
+    partial class UpdatedEntitiesReference
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");

@@ -1,5 +1,4 @@
 using medii_si_platforme_de_dezvoltare_avansate_events.Models.DTOs;
-using medii_si_platforme_de_dezvoltare_avansate_events.Models.Entities;
 
 namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
 {
@@ -14,13 +13,5 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
         Task<ApiResponse<EventRegistrationDto>> JoinEventAsync(int userId, int eventId);
         Task<ApiResponse<bool>> CancelRegistrationAsync(int userId, int eventId);
         Task<ApiResponse<IEnumerable<EventRegistrationDto>>> GetEventParticipantsAsync(int eventId, int adminUserId);
-    }
-
-    public interface IUserService
-    {
-        Task<ApiResponse<UserDto>> GetUserByIdAsync(int userId);
-        Task<ApiResponse<IEnumerable<UserDto>>> GetAllUsersAsync();
-        Task<ApiResponse<UserDto>> CreateUserAsync(CreateUserRequest request);
-        Task<ApiResponse<IEnumerable<EventRegistrationDto>>> GetUserRegistrationsAsync(int userId);
     }
 }

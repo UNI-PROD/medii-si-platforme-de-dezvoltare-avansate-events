@@ -1,0 +1,6 @@
+@medii_si_platforme_de_dezvoltare_avansate_events_HostAddress = http://localhost:5155
+
+GET {{medii_si_platforme_de_dezvoltare_avansate_events_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

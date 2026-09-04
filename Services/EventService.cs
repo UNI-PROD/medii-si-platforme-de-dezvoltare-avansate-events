@@ -1,6 +1,8 @@
 using medii_si_platforme_de_dezvoltare_avansate_events.Models.DTOs;
 using medii_si_platforme_de_dezvoltare_avansate_events.Models.Entities;
 using medii_si_platforme_de_dezvoltare_avansate_events.Repositories;
+using medii_si_platforme_de_dezvoltare_avansate_events.Services.Rules;
+using medii_si_platforme_de_dezvoltare_avansate_events.Services.Notifications;
 
 namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
 {
@@ -9,15 +11,24 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
         private readonly IEventRepository _eventRepository;
         private readonly IEventRegistrationRepository _registrationRepository;
         private readonly IUserRepository _userRepository;
+        private readonly IEnumerable<IEventValidationRule> _eventValidationRules;
+        private readonly IEnumerable<IRegistrationEligibilityRule> _registrationEligibilityRules;
+        private readonly IEnumerable<IRegistrationObserver> _registrationObservers;
 
         public EventService(
             IEventRepository eventRepository,
             IEventRegistrationRepository registrationRepository,
-            IUserRepository userRepository)
+            IUserRepository userRepository,
+            IEnumerable<IEventValidationRule> eventValidationRules,
+            IEnumerable<IRegistrationEligibilityRule> registrationEligibilityRules,
+            IEnumerable<IRegistrationObserver> registrationObservers)
         {
             _eventRepository = eventRepository;
             _registrationRepository = registrationRepository;
             _userRepository = userRepository;
+            _eventValidationRules = eventValidationRules;
+            _registrationEligibilityRules = registrationEligibilityRules;
+            _registrationObservers = registrationObservers;
         }
 
         public async Task<ApiResponse<EventDto>> GetEventByIdAsync(int eventId)
@@ -114,25 +125,6 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
                     };
                 }
 
-                // Validate request
-                if (request.RegistrationDeadline >= request.StartDate)
-                {
-                    return new ApiResponse<EventDto>
-                    {
-                        Success = false,
-                        Message = "Deadline-ul înscrierii trebuie să fie înainte de data de start."
-                    };
-                }
-
-                if (request.MaxParticipants <= 0)
-                {
-                    return new ApiResponse<EventDto>
-                    {
-                        Success = false,
-                        Message = "Numărul maxim de participanți trebuie să fie mai mare decât 0."
-                    };
-                }
-
                 var eventObj = new Event
                 {
                     Title = request.Title,
@@ -145,6 +137,20 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true
                 };
+
+                // Apply validation rules (Strategy Pattern)
+                foreach (var rule in _eventValidationRules)
+                {
+                    var validationResult = rule.Validate(eventObj);
+                    if (!validationResult.IsValid)
+                    {
+                        return new ApiResponse<EventDto>
+                        {
+                            Success = false,
+                            Message = validationResult.ErrorMessage
+                        };
+                    }
+                }
 
                 await _eventRepository.CreateEventAsync(eventObj);
 
@@ -305,23 +311,20 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
 
                 // Check if already registered
                 var existingRegistration = await _registrationRepository.GetRegistrationAsync(userId, eventId);
-                if (existingRegistration != null && existingRegistration.Status == RegistrationStatus.Registered)
-                {
-                    return new ApiResponse<EventRegistrationDto>
-                    {
-                        Success = false,
-                        Message = "Sunteți deja înscris la acest eveniment."
-                    };
-                }
+                var alreadyRegistered = existingRegistration != null && existingRegistration.Status == RegistrationStatus.Registered;
 
-                // Check if registration is open
-                if (!eventObj.IsRegistrationOpen)
+                // Apply eligibility rules (Strategy Pattern)
+                foreach (var rule in _registrationEligibilityRules)
                 {
-                    return new ApiResponse<EventRegistrationDto>
+                    var validationResult = rule.Validate(eventObj, alreadyRegistered);
+                    if (!validationResult.IsValid)
                     {
-                        Success = false,
-                        Message = "Înscrierea la acest eveniment nu mai este disponibilă."
-                    };
+                        return new ApiResponse<EventRegistrationDto>
+                        {
+                            Success = false,
+                            Message = validationResult.ErrorMessage
+                        };
+                    }
                 }
 
                 var registration = new EventRegistration
@@ -333,6 +336,12 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
                 };
 
                 await _registrationRepository.CreateRegistrationAsync(registration);
+
+                // Notify observers (Observer Pattern)
+                foreach (var observer in _registrationObservers)
+                {
+                    await observer.OnRegistrationCreatedAsync(registration, eventObj);
+                }
 
                 return new ApiResponse<EventRegistrationDto>
                 {
@@ -365,9 +374,21 @@ namespace medii_si_platforme_de_dezvoltare_avansate_events.Services
                     };
                 }
 
+                // Get event details before deletion to notify observers
+                var eventObj = await _eventRepository.GetEventByIdAsync(eventId);
+
                 registration.Status = RegistrationStatus.Cancelled;
                 // Note: In a real scenario, you might want to update instead of delete
                 await _registrationRepository.DeleteRegistrationAsync(registration.Id);
+
+                // Notify observers (Observer Pattern)
+                if (eventObj != null)
+                {
+                    foreach (var observer in _registrationObservers)
+                    {
+                        await observer.OnRegistrationCancelledAsync(registration, eventObj);
+                    }
+                }
 
                 return new ApiResponse<bool>
                 {

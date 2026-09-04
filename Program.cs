@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using medii_si_platforme_de_dezvoltare_avansate_events.Data;
 using medii_si_platforme_de_dezvoltare_avansate_events.Repositories;
 using medii_si_platforme_de_dezvoltare_avansate_events.Services;
+using medii_si_platforme_de_dezvoltare_avansate_events.Services.Rules;
+using medii_si_platforme_de_dezvoltare_avansate_events.Services.Notifications;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +25,18 @@ builder.Services.AddScoped<IEventRegistrationRepository, EventRegistrationReposi
 // Register Services
 builder.Services.AddScoped<IEventService, EventService>();
 builder.Services.AddScoped<IUserService, UserService>();
+
+// Register Validation Rules (Strategy Pattern)
+builder.Services.AddScoped<IEventValidationRule, DeadlineBeforeStartRule>();
+builder.Services.AddScoped<IEventValidationRule, PositiveMaxParticipantsRule>();
+
+// Register Registration Eligibility Rules (Strategy Pattern)
+builder.Services.AddScoped<IRegistrationEligibilityRule, RegistrationWindowOpenRule>();
+builder.Services.AddScoped<IRegistrationEligibilityRule, NotAlreadyRegisteredRule>();
+
+// Register Registration Observers (Observer Pattern)
+builder.Services.AddScoped<IRegistrationObserver, LoggingRegistrationObserver>();
+builder.Services.AddScoped<IRegistrationObserver, EventCapacityObserver>();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
